@@ -15,13 +15,25 @@ type Handler struct {
 }
 
 func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	user := models.Users{
-		FirstName: "Jithesh",
-		LastName:  "Jose",
-		Username:  "8590811971",
-		Password:  models.HashPassword("Test@123"),
-		Email:     "jitheshjs983@gmail.com",
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Only POST method is allowed"))
+		return
 	}
+
+	var user models.Users
+
+	// Decode JSON body into user struct
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	// Optional: hash password if it's plain text in the request
+	if user.Password != "" {
+		user.Password = models.HashPassword(user.Password)
+	}
+
 	if err := h.DB.Create(&user).Error; err != nil {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		log.Println("DB error:", err)
@@ -30,5 +42,6 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
-	fmt.Println("✅ Fields added:", user)
+
+	fmt.Println("✅ User added:", user)
 }
