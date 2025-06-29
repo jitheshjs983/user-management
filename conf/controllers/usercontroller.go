@@ -112,3 +112,48 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
+
+func (h *Handler) PasswordChange(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Only POST method is allowed"))
+		return
+	}
+
+	var input models.LoginInput
+	// Decode JSON body into user struct
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+	loginType, err := utils.DetectLoginType(input.Login)
+	if err != nil {
+		http.Error(w, "Login must be a valid email or mobile number", http.StatusBadRequest)
+		return
+	}
+	user, err := models.GetUserByLogin(h.DB, input.Login, loginType)
+	if err != nil {
+		log.Println("User lookup error:", err)
+		http.Error(w, "Invalid login or password", http.StatusUnauthorized)
+		return
+	}
+	// Compare password with bcrypt hash
+	if models.IsSamePassword(user.Password, input.Password) {
+		http.Error(w, "Please use a different password", http.StatusBadRequest)
+		return
+	}
+	hashed := models.HashPassword(input.Password)
+	if err := h.DB.Model(&user).Update("password", hashed).Error; err != nil {
+		http.Error(w, "Failed to update password", http.StatusInternalServerError)
+		return
+	}
+	resp := map[string]string{
+		"message":  "Password updation successful",
+		"username": user.Username,
+		"email":    user.Email,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+}

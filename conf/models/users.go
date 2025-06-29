@@ -70,3 +70,8 @@ func GetUserByLogin(db *gorm.DB, login, loginType string) (*Users, error) {
 	}
 	return &user, nil
 }
+
+func IsSamePassword(hashedPassword, inputPassword string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(inputPassword))
+	return err == nil
+}
