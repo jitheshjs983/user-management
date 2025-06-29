@@ -97,7 +97,18 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Login successful — respond accordingly
+	tokenString, err := utils.CreateToken(user.Username, user.Email, user.FirstName, user.LastName)
+	if err != nil {
+		panic(err)
+	}
+	resp := map[string]string{
+		"message":  "Login successful",
+		"username": user.Username,
+		"email":    user.Email,
+		"token":    tokenString,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Login successful"))
+	json.NewEncoder(w).Encode(resp)
 }
