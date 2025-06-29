@@ -28,8 +28,24 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
 		return
 	}
-
-	// Optional: hash password if it's plain text in the request
+	emailExists, err := models.GetUserByEmail(h.DB, user.Email)
+	if err != nil {
+		http.Error(w, "Failed to check user existence", http.StatusInternalServerError)
+		return
+	}
+	if emailExists {
+		http.Error(w, "Email is already registered. Please try again with a different email.,", http.StatusConflict)
+		return
+	}
+	phoneExists, err := models.GetUserByMobile(h.DB, user.Username)
+	if err != nil {
+		http.Error(w, "Failed to check user existence", http.StatusInternalServerError)
+		return
+	}
+	if phoneExists {
+		http.Error(w, "mobile number is already registered. Please try again with a different mobile number.,", http.StatusConflict)
+		return
+	}
 	if user.Password != "" {
 		user.Password = models.HashPassword(user.Password)
 	}
