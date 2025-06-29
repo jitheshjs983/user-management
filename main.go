@@ -10,12 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
-var dsn = "root:@tcp(127.0.0.1:3306)/test_db?charset=utf8mb4"
+var dsn = "root:@tcp(127.0.0.1:3306)/test_db?charset=utf8mb4&parseTime=true"
 var db, _ = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 func main() {
 	handler := &controllers.Handler{DB: db}
-	http.HandleFunc("/user", handler.RegisterUser)
+	http.HandleFunc("/register", handler.RegisterUser)
+	http.HandleFunc("/login", handler.LoginUser)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

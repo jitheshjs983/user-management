@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"gorm/conf/models"
+	"gorm/conf/utils"
 	"log"
 	"net/http"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -60,4 +62,42 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 
 	fmt.Println("✅ User added:", user)
+}
+
+func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Only POST method is allowed"))
+		return
+	}
+
+	var input models.LoginInput
+	// Decode JSON body into user struct
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	loginType, err := utils.DetectLoginType(input.Login)
+	if err != nil {
+		http.Error(w, "Login must be a valid email or mobile number", http.StatusBadRequest)
+		return
+	}
+	user, err := models.GetUserByLogin(h.DB, input.Login, loginType)
+	if err != nil {
+		log.Println("User lookup error:", err)
+		http.Error(w, "Invalid login or password", http.StatusUnauthorized)
+		return
+	}
+	log.Printf("User found: %+v\n", user)
+	// Compare password with bcrypt hash
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
+	if err != nil {
+		http.Error(w, "Invalid login or password", http.StatusUnauthorized)
+		return
+	}
+
+	// Login successful — respond accordingly
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Login successful"))
 }

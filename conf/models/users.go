@@ -1,11 +1,17 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
+
+type LoginInput struct {
+	Login    string `json:"login"`    // email or mobile
+	Password string `json:"password"` // user password
+}
 
 type Users struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
@@ -45,4 +51,22 @@ func GetUserByMobile(db *gorm.DB, username string) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func GetUserByLogin(db *gorm.DB, login, loginType string) (*Users, error) {
+	var user Users
+	var err error
+	switch loginType {
+	case "email":
+		err = db.Where("email = ?", login).First(&user).Error
+	case "mobile":
+		err = db.Where("username = ?", login).First(&user).Error
+	default:
+		return nil, fmt.Errorf("invalid login type")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
