@@ -2,13 +2,14 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 // Define a secret key (keep this safe and private)
-var jwtSecret = []byte("test-secret-key-1234567890")
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 // Claims struct (customize as needed)
 type MyClaims struct {
