@@ -157,3 +157,12 @@ func (h *Handler) PasswordChange(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
+
+func (h *Handler) DashboardData(w http.ResponseWriter, r *http.Request) {
+	resp := map[string]string{
+		"message": "Authentication Successful",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+}
