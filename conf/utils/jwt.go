@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // Claims struct (customize as needed)
@@ -26,6 +27,7 @@ func CreateToken(username, email, firstName, lastName string) (string, error) {
 		FirstName: firstName,
 		LastName:  lastName,
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
 			ExpiresAt: jwt.NewNumericDate(now.Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			Issuer:    "User Management",

@@ -3,11 +3,16 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"gorm/conf/middleware"
 	"gorm/conf/models"
 	"gorm/conf/utils"
 	"log"
 	"net/http"
+	"os"
+	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -165,4 +170,45 @@ func (h *Handler) DashboardData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) LogoutUser(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Missing Authorization header", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+		return
+	}
+
+	jti, ok := claims["jti"].(string)
+	if !ok {
+		http.Error(w, "Token missing jti", http.StatusUnauthorized)
+		return
+	}
+
+	expFloat, ok := claims["exp"].(float64)
+	if !ok {
+		http.Error(w, "Token missing exp", http.StatusUnauthorized)
+		return
+	}
+	expiry := time.Unix(int64(expFloat), 0)
+
+	middleware.BlacklistToken(jti, expiry)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Logged out successfully"))
 }
