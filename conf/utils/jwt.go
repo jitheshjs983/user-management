@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -32,8 +31,6 @@ func CreateToken(username, email, firstName, lastName string) (string, error) {
 			Issuer:    "User Management",
 		},
 	}
-	fmt.Println("JWT_SECRET:", jwtSecret)
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
 }
