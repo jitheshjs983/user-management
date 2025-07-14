@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gorm/conf/middleware"
 	"gorm/conf/models"
+	"gorm/conf/service"
 	"gorm/conf/utils"
 	"log"
 	"net/http"
@@ -211,4 +212,23 @@ func (h *Handler) LogoutUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged out successfully"))
+}
+
+func (h *Handler) GetNameFromPan(w http.ResponseWriter, r *http.Request) {
+	var pan models.PanInput
+	if err := json.NewDecoder(r.Body).Decode(&pan); err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	// Call the service and get the result
+	result, err := service.GetNameFromPan(pan.Pan)
+	if err != nil {
+		http.Error(w, "Failed to fetch PAN details: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }

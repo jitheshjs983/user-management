@@ -13,6 +13,10 @@ type LoginInput struct {
 	Password string `json:"password"` // user password
 }
 
+type PanInput struct {
+	Pan string `json:"pan"`
+}
+
 type Users struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	FirstName string         `json:"first_name"`

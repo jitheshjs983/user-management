@@ -27,6 +27,7 @@ func main() {
 	http.HandleFunc("/change-password", handler.PasswordChange)
 	http.Handle("/dashboard", middleware.JWTMiddleware(http.HandlerFunc(handler.DashboardData)))
 	http.Handle("/logout", middleware.JWTMiddleware(http.HandlerFunc(handler.LogoutUser)))
+	http.Handle("/pan/name", http.HandlerFunc(handler.GetNameFromPan))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
